@@ -715,34 +715,7 @@ class api
 	// **********
 	// Google API
 	// **********
-	public function googleApi($q, $offset) {
-		
-		// Multiple keys available due to overcome limits of 100 queries per day per key
-		
-		// Google API key 1
-		$googleApiKey='AIzaSyDaDcmBjDUCAjc24BldgjWyg8q9XGXNrk4';
-		$id='004553691612569663192:yswazcgthyw';
-		
-		// Google API key 2
-		//$googleApiKey='AIzaSyCzSaVpcOkrHS6FIB_0xDBynaz4vIcd6N0';
-		//$id='004553691612569663192:gd_zraf1v8w';
-		
-		// Google API key 3
-		//$googleApiKey='AIzaSyB7P8S4rrSCSsoJ1dBkU2Pdes97VbozrOU';
-		//$id='004553691612569663192:ijnh5euybl8';
-		
-		// Google API key 4
-		//$googleApiKey='AIzaSyDznVCOSGLJcNZ9RAWSdRzOppatGhDUacE';
-		//$id='004553691612569663192:vhgi8oaqlaq';
-		
-		// Google API key 5
-		//$googleApiKey='AIzaSyANDTitlWV6aFPTGmtWsjhuggeVEs4XFBc';
-		//$id='004553691612569663192:g_hxag4ezoi';
-		
-		// Google API key 6
-		//$googleApiKey='AIzaSyAAGRUJM4PIBVnlB2VDa9aBrxzhSubMCjc';
-		//$id='004553691612569663192:g_nwnf3f7f8';
-		
+	public function googleApi($googleApiKey, $id, $q, $offset) {
 		// Construct the link
 		$url='https://www.googleapis.com/customsearch/v1?'.'key='.$googleApiKey.'&cx='.$id.'&q='.$q.'&alt=json'.'&start='.$offset;
 		// Clean spaces from the string
@@ -782,8 +755,8 @@ class api
 		}
 		
 		// Stores data in a file if required
-		//$content = serialize($this->js1);
-		//file_put_contents('tmp1',$content);
+		$content = serialize($this->js1);
+		//file_put_contents('tmp1b',$this->js1);// or $content
 		/*
 		*/
 		// Recovers data from a file if required
@@ -794,37 +767,36 @@ class api
 	// **********
 	// Bing API
 	// **********
-	public function bingApi($q, $results, $offset) {
-		
-		
-		// Keys
-		$acctKey = 'FpJuEBJPBTE9xY5X/k+xXXLJY8y1RoXC+wFxNb5s9jc= ';
-		$rootUri = 'https://api.datamarket.azure.com/Bing/Search';
-		
+	public function bingApi($key, $q, $results, $offset) {
 		// Get the selected service operation (Web or Image).
 		$serviceOp = 'Web';
 		$numResults = '$top='.$results;
 		$skip = '$skip='.$offset;
 		
 		// Construct the full URI for the query.
-		$requestUri = "$rootUri/$serviceOp?\$format=json&Query=$q&$numResults&$skip";
+		//$requestUri = "$rootUri/$serviceOp?\$format=json&Query=$q&$numResults&$skip";
+		$requestUri = "https://api.cognitive.microsoft.com/bing/v5.0/search?q=" . $q . "&count=" . $results . "&offset=" . $offset . "0&mkt=en-us&safesearch=Moderate";
 		//
 		$ch = curl_init($requestUri);
 		//
 		curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-		curl_setopt($ch, CURLOPT_USERPWD, $acctKey . ":" . $acctKey );
+//		curl_setopt($ch, CURLOPT_USERPWD, $acctKey . ":" . $acctKey );
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+            'Content-Type: multipart/form-data',
+            'Ocp-Apim-Subscription-Key: ' . $key
+        ));
 		curl_setopt($ch, CURLOPT_TIMEOUT, 30);
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 		$data = curl_exec($ch);
-		
+
 		// json decode
 		$this->js2 = json_decode($data);
 		//echo '</br></br>Vardumpjs2: ('.$offset.')</br></br>';
 		//var_dump($this->js2);
 		
 		// Set results Flag
-		if (!empty($this->js2->{'d'}->{'results'}) > '0')
+		if (!empty($this->js2->{'webPages'}->{'value'}) > '0')
 		{
 			//echo '</br>Blekko API: Results!!!';
 			$this->js2ResultFlag = TRUE;
@@ -836,8 +808,8 @@ class api
 		}
 		
 		// Stores data in a file if required
-		//$content = serialize($this->js2);
-		//file_put_contents('tmp2',$content);
+		$content = serialize($this->js2);
+		//file_put_contents('tmp2',$this->js2);// or content serialised
 		/*
 		*/
 		// Recovers data from a file if required
@@ -849,11 +821,7 @@ class api
 	// **********
 	// blekko api
 	// **********
-	public function blekkoApi($q, $results, $offset) {
-		
-		
-		// Set the Blekko API key
-		$blekkoApiKey='f4c8acf3';
+	public function blekkoApi($blekkoApiKey, $q, $results, $offset) {
 		// Construct the link
 		$url="http://"."blekko.com"."/ws/?q=".$q."+/json"."+/ps=".$results."&auth=".$blekkoApiKey."&p=".$offset;
 		// Clean spaves from the string
@@ -1121,21 +1089,22 @@ class formatter
 	public function setBingJson($js_import, $js2ResultFlag) {
 		$this->js2 = $js_import;
 		$this->js2ResultFlag = $js2ResultFlag;
+		echo " RES FG: " . $this->js2ResultFlag . "<br/>";
     }
 	
 	// Render BING data from JSON object to result set property
 	public function formatBingJson($results, $offset) {	
-		
+		//var_dump($this->js2->{'webPages'}->{'value'});exit;
 		if($this->js2ResultFlag == TRUE){
 
 			$j = $results - $offset + 1;
-			foreach($this->js2->{'d'}->{'results'} as $item)
+			foreach($this->js2->{'webPages'}->{'value'} as $item)
 			{
-				if(!in_array($this->cleanLink($item->{'Url'}), $this->resultSet2->returnUrls(), TRUE))
+			    if(!in_array($this->cleanLink($item->{'displayUrl'}), $this->resultSet2->returnUrls(), TRUE))
 				{
-					$this->resultSet2->addUrl($this->cleanLink($item->{'Url'}));
-					$this->resultSet2->addTitle($this->cleanText($item->{'Title'}));
-					$this->resultSet2->addSnippet($this->cleanText($item->{'Description'}));
+					$this->resultSet2->addUrl($this->cleanLink($item->{'displayUrl'}));
+					$this->resultSet2->addTitle($this->cleanText($item->{'name'}));
+					$this->resultSet2->addSnippet($this->cleanText($item->{'snippet'}));
 					$this->resultSet2->addScore($j);
 					$j--;
 				}

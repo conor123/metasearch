@@ -1,31 +1,32 @@
 <?php
-	// Time query
-	$time_pre = microtime(true);
-	
-	// Get the Query from User input
-	$q = strtolower($_SESSION['query']);
-	
-	if($_SESSION['queryEx'] == 'on')
-	{
-		// Query Preprocess
-		$thesaurus1 = new thesaurus;
-		$thesaurus1->loadThesaurusFile($_SESSION['thesaurus']);
-		$qX = new query;
-		if($_SESSION['stemmer'] == 'off')
-			$qX->tokeniseQuery($q);
-		else if($_SESSION['stemmer'] == 'on')
-		{
-			$qX->tokeniseQuery(implode(" ",$qX->stem_list($q)));
-		}
-		
-		$q = $qX->expandQuery($q, $thesaurus1->returnThesaurus());
-	}
-	
-	// Process the Query
-	$q1 = new query;
-	$query1 = $q1->complexQueryGoogle($q);
-	$query2 = $q1->complexQueryBing($q);
-	$query3 = $q1->complexQueryBlekko($q);
+require "config.php";
+// Time query
+$time_pre = microtime(true);
+
+// Get the Query from User input
+$q = strtolower($_SESSION['query']);
+
+if($_SESSION['queryEx'] == 'on')
+{
+    // Query Preprocess
+    $thesaurus1 = new thesaurus;
+    $thesaurus1->loadThesaurusFile($_SESSION['thesaurus']);
+    $qX = new query;
+    if($_SESSION['stemmer'] == 'off')
+        $qX->tokeniseQuery($q);
+    else if($_SESSION['stemmer'] == 'on')
+    {
+        $qX->tokeniseQuery(implode(" ",$qX->stem_list($q)));
+    }
+
+    $q = $qX->expandQuery($q, $thesaurus1->returnThesaurus());
+}
+
+// Process the Query
+$q1 = new query;
+$query1 = $q1->complexQueryGoogle($q);
+$query2 = $q1->complexQueryBing($q);
+$query3 = $q1->complexQueryBlekko($q);
 	
 	
 // AGG
@@ -42,7 +43,7 @@ if($_SESSION['result_op']=='agg')
 		// Get offset
 		$offset = 1+($i*10);
 		// Call Google API
-		$api1->googleApi($query1, $offset);
+		$api1->googleApi($googleApiKey, $id, $query1, $offset);
 		
 		// Set Google JSON Data
 		$formatter1->setGoogleJson($api1->returnGoogleJsonData(), $api1->returnGoogleJsonResultFlag());
@@ -55,14 +56,14 @@ if($_SESSION['result_op']=='agg')
 		// Get offset
 		$offset = 1+($i*50);
 		// Call Bing API
-		$api1->bingApi($query2, $_SESSION['results'], $offset);
+		$api1->bingApi($bingApiKey, $query2, $_SESSION['results'], $offset);
 		// Set BING JSON Data
 		$formatter1->setBingJson($api1->returnBingJsonData(), $api1->returnBingJsonResultFlag());
 		$formatter1->formatBingJson($_SESSION['results'], $i*50);
 	}
 
 	// Blekko Results
-	$api1->blekkoApi($query3, $_SESSION['results'], 0);
+	$api1->blekkoApi($blekkoApiKey, $query3, $_SESSION['results'], 0);
 	// Set BLEKKO JSON Data
 	$formatter1->setBlekkoJson($api1->returnBlekkoJsonData(), $api1->returnBlekkoJsonResultFlag());
 	$formatter1->formatBlekkoJson($_SESSION['results'], 0);
@@ -94,19 +95,19 @@ else if($_SESSION['result_op']=='nonAgg')
 	$formatter1 = new formatter(new resultSet(), new resultSet(), new resultSet());
 	
 	// Call Google API
-	$api1->googleApi($query1, $_SESSION['offset']);
+	$api1->googleApi($googleApiKey, $id, $query1, $_SESSION['offset']);
 	// Set Google JSON Data
 	$formatter1->setGoogleJson($api1->returnGoogleJsonData(), $api1->returnGoogleJsonResultFlag());
 	$formatter1->formatGoogleJson(100, $_SESSION['offset']);
 
 	// Call Bing API
-	$api1->bingApi($query2, 10, $_SESSION['offset']);
+	$api1->bingApi($bingApiKey, $query2, 10, $_SESSION['offset']);
 	// Set BING JSON Data
 	$formatter1->setBingJson($api1->returnBingJsonData(), $api1->returnBingJsonResultFlag());
 	$formatter1->formatBingJson(100, $_SESSION['offset']);
 
 	// Call Blekko API
-	$api1->blekkoApi($query3, 10, ((int)$_SESSION['offset']/10));
+	$api1->blekkoApi($blekkoApiKey, $query3, 10, ((int)$_SESSION['offset']/10));
 	// Set BLEKKO JSON Data
 	$formatter1->setBlekkoJson($api1->returnBlekkoJsonData(), $api1->returnBlekkoJsonResultFlag());
 	$formatter1->formatBlekkoJson(100, $_SESSION['offset']);
@@ -157,7 +158,7 @@ else if($_SESSION['result_op']=='clustered')
 			// Get offset
 			$offset = 1+($i*10);
 			// Call Google API
-			$api1->googleApi($query1, $offset);
+			$api1->googleApi($googleApiKey, $id, $query1, $offset);
 			
 			// Set Google JSON Data
 			$formatter1->setGoogleJson($api1->returnGoogleJsonData(), $api1->returnGoogleJsonResultFlag());
@@ -170,14 +171,14 @@ else if($_SESSION['result_op']=='clustered')
 			// Get offset
 			$offset = 1+($i*50);
 			// Call Bing API
-			$api1->bingApi($query2, $_SESSION['results'], $offset);
+			$api1->bingApi($bingApiKey, $query2, $_SESSION['results'], $offset);
 			// Set BING JSON Data
 			$formatter1->setBingJson($api1->returnBingJsonData(), $api1->returnBingJsonResultFlag());
 			$formatter1->formatBingJson($_SESSION['results'], $i*50);
 		}
 
 		// Blekko Results
-		$api1->blekkoApi($query3, $_SESSION['results'], 0);
+		$api1->blekkoApi($blekkoApiKey, $query3, $_SESSION['results'], 0);
 		// Set BLEKKO JSON Data
 		$formatter1->setBlekkoJson($api1->returnBlekkoJsonData(), $api1->returnBlekkoJsonResultFlag());
 		$formatter1->formatBlekkoJson($_SESSION['results'], 0);
@@ -245,7 +246,7 @@ else if($_SESSION['result_op']=='clustered')
 			// Get offset
 			$offset = 1+($i*10);
 			// Call Google API
-			$api1->googleApi($query1, $offset);
+			$api1->googleApi($googleApiKey, $id, $query1, $offset);
 			
 			// Set Google JSON Data
 			$formatter1->setGoogleJson($api1->returnGoogleJsonData(), $api1->returnGoogleJsonResultFlag());
@@ -258,14 +259,14 @@ else if($_SESSION['result_op']=='clustered')
 			// Get offset
 			$offset = 1+($i*50);
 			// Call Bing API
-			$api1->bingApi($query2, $_SESSION['results'], $offset);
+			$api1->bingApi($bingApiKey, $query2, $_SESSION['results'], $offset);
 			// Set BING JSON Data
 			$formatter1->setBingJson($api1->returnBingJsonData(), $api1->returnBingJsonResultFlag());
 			$formatter1->formatBingJson($_SESSION['results'], $i*50);
 		}
 
 		// Blekko Results
-		$api1->blekkoApi($query3, $_SESSION['results'], 0);
+		$api1->blekkoApi($blekkoApiKey, $query3, $_SESSION['results'], 0);
 		// Set BLEKKO JSON Data
 		$formatter1->setBlekkoJson($api1->returnBlekkoJsonData(), $api1->returnBlekkoJsonResultFlag());
 		$formatter1->formatBlekkoJson($_SESSION['results'], 0);
