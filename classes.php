@@ -1089,7 +1089,6 @@ class formatter
 	public function setBingJson($js_import, $js2ResultFlag) {
 		$this->js2 = $js_import;
 		$this->js2ResultFlag = $js2ResultFlag;
-		echo " RES FG: " . $this->js2ResultFlag . "<br/>";
     }
 	
 	// Render BING data from JSON object to result set property
